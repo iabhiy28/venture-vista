@@ -1,8 +1,8 @@
 const { mkactivity } = require('../app');
 const Tour = require('../models/tourModel');
 const APIFeatures = require('../utils/apifeatures');
-const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
 
 exports.aliasTopTours = (req,res,next) => {
     req.query.limit = '5';
@@ -47,7 +47,7 @@ exports.aliasTopTours = (req,res,next) => {
 exports.getAllTours = catchAsync(async (req, res, next) => {
     const features = new APIFeatures(Tour.find() ,req.query).filter().sort().limitFields().paginate();
         const tours = await features.query;
-
+        // send response
         res.status(200).json({
             status: 'Success',
             result: tours.length,

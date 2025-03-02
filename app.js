@@ -31,6 +31,8 @@ app.use(express.static(`${__dirname}/public`));
 
 app.use((req, res, next) => {
   req.requstTime = new Date().toISOString();
+  // console.log(req.headers);
+
   next();
 });
 // third party middleware
