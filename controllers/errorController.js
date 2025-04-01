@@ -22,6 +22,10 @@ const handleValidationErrorDB = err => {
 }
 
 
+const handleJWTError = () => new AppError('Invalid token. Please log in again!', 401);
+
+
+const handleJWTExpiredError = (err) => new AppError('Your token has expired! Please log in again.', 401);
 
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -64,12 +68,15 @@ const sendErrorProd = (err, res) =>{
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
-
+ 
+  // whenever we are comparing any string with another string, we should use trim() method to remove the extra spaces in the string
+  // and also we should use toLowerCase() method to convert the string to lower case.
 
   if(process.env.NODE_ENV === 'development'){
     sendErrorDev(err, res);
   }
-  else if(process.env.NODE_ENV=== 'production') {
+  else if(process.env.NODE_ENV.trim()=== 'production') {
+    
     let error = {...err};
     if(error.name === "CastError") error = handleCastErrorDB(error);
 
@@ -79,6 +86,14 @@ module.exports = (err, req, res, next) => {
 
 
     if(error.name === "ValidationError") error = handleValidationErrorDB(error);
+
+    if(error.name === "JsonWebTokenError")
+      error = handleJWTError(error);
+
+
+    if(error.name === "TokenExpiredError") error = handleJWTExpiredError();
+    // 3) send error to client
+
     sendErrorProd(error, res);
-  } 
+  }
 };
