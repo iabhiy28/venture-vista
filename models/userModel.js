@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 
@@ -39,6 +40,8 @@ const userSchema = new mongoose.Schema({
         }
     },
     passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
 
 });
 // using the pre-save middleware
@@ -56,6 +59,14 @@ userSchema.pre('save',async function(next) {
 });
 
 
+userSchema.pre('save', function(next) {
+    if(!this.isModified('password') || this.isNew) return next();
+
+    this.passwordChangedAt = Date.now() - 1000; // subtract 1000 milliseconds to ensure the password changed at is before the JWT issued at time
+    next();
+});
+
+
 userSchema.methods.correctPassword = async function(candidatePassword, userPassword) {
     return bcrypt.compare(candidatePassword, userPassword);
 }
@@ -70,6 +81,20 @@ userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
     }
     return false;
 };
+
+
+userSchema.methods.createPasswordResetToken = function() {
+    const resetToken  = crypto.randomBytes(32).toString('hex');
+
+    this.passwordResetToken =  crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    console.log({resetToken}, this.passwordResetToken);
+
+
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    return resetToken; // this is the unencrypted token
+}
 
 
 
